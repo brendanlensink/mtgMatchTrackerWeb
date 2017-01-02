@@ -25,10 +25,6 @@ $username = $_SERVER['HTTP_USERNAME'];
 $password = $_SERVER['HTTP_PASSWORD'];
 $userId = Auth::Login($username, $password);
 
-// echo($method);
-// echo(print_r($request));
-// echo($input);
-
 if(is_numeric($userId)) {
 
   // Step 3: Decide if we're GETting or POSTing
@@ -69,7 +65,25 @@ if(is_numeric($userId)) {
     }
     break;
   case 'POST':
-    echo("Post detected");
+    // Make sure we've got the right endpoint
+    if(array_key_exists(0, $request)) {
+      switch($request[0]) {
+      case 'matches':
+        // If there's a match id supplied, we're updating an existing record
+        if(array_key_exists(1, $request)) {
+          // TODO: Update an existing match
+        }else {
+        // If there was no matchId supplied, we're adding a new match record
+            $status = Match::ParseMatch($userId, $input);
+        }
+        break;
+      default:
+        $message = "Incorrect endpoint";
+        break;
+      }
+    }else {
+      $message = "No endpoint supplied";
+    }
     break;
   default:
     echo "Default method detected";

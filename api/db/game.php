@@ -12,7 +12,6 @@ class Game {
   * Instance Data
   */
 
-  private $id;
   private $matchId;
   private $game;
   private $start;
@@ -37,8 +36,7 @@ class Game {
     );
   }
 
-  public function __construct($id, $matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
-    $this->id = $id;
+  public function __construct($matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
     $this->matchId = $matchId;
     $this->game = $game;
     $this->start = $start;
@@ -53,7 +51,6 @@ class Game {
   */
 
   private static function PopulateGame($row) {
-    $id = $row['id'];
     $matchId = $row['matchId'];
     $game = $row['game'];
     $start = $row['start'];
@@ -62,7 +59,7 @@ class Game {
     $theirHand = $row['theirHand'];
     $notes = $row['notes'];
 
-    $newGame = new Game($id, $matchId, $game, $start, $result, $myHand, $theirHand, $notes);
+    $newGame = new Game($matchId, $game, $start, $result, $myHand, $theirHand, $notes);
     return $newGame;
   }
 
@@ -87,17 +84,35 @@ class Game {
     }
   }
 
-  public static function CreateGame($id, $matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
+  public static function ParseGame($matchId, $userId, $input) {
+    // If we don't have a matchId and a game then we're SOL
+    if(array_key_exists('game', $input)) {
+      $game = $input['game'];
+      $start = array_key_exists('start', $input) ? $input['start'] : null;
+      $result = array_key_exists('start', $input) ? $input['start'] : null;
+      $myHand = array_key_exists('myHand', $input) ? $input['myHand'] : null;
+      $theirHand = array_key_exists('theirHand', $input) ? $input['theirHand'] : null;
+      $notes = array_key_exists('notes', $input) ? $input['notes'] : null;
+
+      $newGame = Game::CreateGame($matchId, $game, $start, $result, $myHand, $theirHand, $notes);
+
+      return $newGame;
+    }
+
+    return "Game not supplied";
+  }
+
+  public static function CreateGame($matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
     $msg = "";
 
     try {
       $db = new DB();
       $conn = $db->GetConnection();
 
-      $stmt = $conn->prepare("INSERT INTO game VALUES(:matchId, :game, :start, :result, :myHand, :theirHand, :notes)");
+      $stmt = $conn->prepare("INSERT INTO game(matchId, game, start, result, myHand, theirHand, notes) VALUES(:matchId, :game, :start, :result, :myHand, :theirHand, :notes)");
       $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
-      $stmt->bindValue(":game", $eventName, PDO::PARAM_INT);
-      $stmt->bindValue(":start", $datetime, PDO::PARAM_INT);
+      $stmt->bindValue(":game", $game, PDO::PARAM_INT);
+      $stmt->bindValue(":start", $start, PDO::PARAM_INT);
       $stmt->bindValue(":result", $result, PDO::PARAM_INT);
       $stmt->bindValue(":myHand", $myHand, PDO::PARAM_INT);
       $stmt->bindValue(":theirHand", $theirHand, PDO::PARAM_INT);

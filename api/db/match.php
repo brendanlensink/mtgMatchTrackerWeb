@@ -135,16 +135,56 @@ class Match {
     }
   }
 
+  public static function ParseMatch($userId, $input) {
+    // The only pieces we need to actually submit a match are a matchId, a userId and some games?
+    if(array_key_exists('matchId', $input)) {
+      // There's got to be a better way to do this, but start collecting all the match info from the json
+      $matchId = $input['matchId'];
+      $eventName = array_key_exists('eventName', $input) ? $input['eventName'] : null;
+      $datetime = array_key_exists('datetime', $input) ? $input['datetime'] : null;
+      $rel = array_key_exists('rel', $input) ? $input['rel'] : null;
+      $format = array_key_exists('format', $input) ? $input['format'] : null;
+      $myDeck = array_key_exists('myDeck', $input) ? $input['myDeck'] : null;
+      $theirDeck = array_key_exists('theirDeck', $input) ? $input['theirDeck'] : null;
+
+      $newMatch = Match::CreateMatch($matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck);
+
+      $gameOne = null;
+      $gameTwo = null;
+      $gameThree = null;
+
+      if(array_key_exists(0, $input)) {
+        $gameOne = Game::ParseGame($matchId, $userId, $input[0]);
+      }
+
+      if(array_key_exists(1, $input)) {
+        $gameTwo = Game::ParseGame($matchId, $userId, $input[1]);
+      }
+
+      if(array_key_exists(2, $input)) {
+        $gameThree = Game::ParseGame($matchId, $userId, $input[2]);
+      }
+
+      if(is_numeric($newMatch) && is_numeric($gameOne) && is_numeric($gameTwo)) {
+        return True;
+      }else {
+        return False;
+      }
+    }else {
+      // If we don't have a match id I think wejust bail.
+      return False;
+    }
+  }
+
   public static function CreateMatch(
-      $id, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck) {
+      $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck) {
     $msg = "";
 
     try {
       $db = new DB();
       $conn = $db->GetConnection();
 
-      $stmt = $conn->prepare("INSERT INTO match ".
-        "VALUES(:matchId, :userId, :eventName, :datetime, :rel, :format, :myDeck, :theirDeck)");
+      $stmt = $conn->prepare("INSERT INTO matches(matchId, userId, eventName, datetime, rel, format, myDeck, theirDeck) VALUES(:matchId, :userId, :eventName, :datetime, :rel, :format, :myDeck, :theirDeck)");
       $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
       $stmt->bindValue(":userId", $userId, PDO::PARAM_STR);
       $stmt->bindValue(":eventName", $eventName, PDO::PARAM_STR);
