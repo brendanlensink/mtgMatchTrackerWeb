@@ -13,13 +13,13 @@ $status = False;
 $message = "";
 $data = array();
 
-// First Step: Get the HTPP method, path and body of the request
+// Step 1: Get the HTPP method, path and body of the request
 
 $method = $_SERVER['REQUEST_METHOD'];
 $request = explode('/', trim($_SERVER['PATH_INFO'], '/'));
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Second Step: Check if we're authenticated
+// Step 2: Check if we're authenticated
 
 $username = $_SERVER['HTTP_USERNAME'];
 $password = $_SERVER['HTTP_PASSWORD'];

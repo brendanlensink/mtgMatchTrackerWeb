@@ -101,7 +101,9 @@ class Match {
       $result = $stmt->fetch();
 
       if($result) {
-        return Match::PopulateMatch($result);
+        $match = Match::PopulateMatch($result);
+        $match->AddGames(Game::GetGamesForMatch($match->GetMatchId()));
+        return $match;
       }
 
       return null;
