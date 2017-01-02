@@ -137,7 +137,7 @@ class Match {
 
   public static function ParseMatch($userId, $input) {
     // The only pieces we need to actually submit a match are a matchId, a userId and some games?
-    if(array_key_exists('matchId', $input)) {
+    if(array_key_exists('matchId', $input) && array_key_exists(0, $input) && array_key_exists(1, $input) ) {
       // There's got to be a better way to do this, but start collecting all the match info from the json
       $matchId = $input['matchId'];
       $eventName = array_key_exists('eventName', $input) ? $input['eventName'] : null;
@@ -153,11 +153,11 @@ class Match {
       $gameTwo = null;
       $gameThree = null;
 
-      if(array_key_exists(0, $input)) {
+      if(array_key_exists('game', $input[0])) {
         $gameOne = Game::ParseGame($matchId, $userId, $input[0]);
       }
 
-      if(array_key_exists(1, $input)) {
+      if(array_key_exists('game', $input[1])) {
         $gameTwo = Game::ParseGame($matchId, $userId, $input[1]);
       }
 
