@@ -59,6 +59,8 @@ if(is_numeric($userId)) {
           }
         break;
       default:
+        http_response_code(400);
+        $status = False;
         $message = "No request supplied";
         break;
       }
@@ -75,6 +77,7 @@ if(is_numeric($userId)) {
         }else {
         // If there was no matchId supplied, we're adding a new match record
             $status = Match::ParseMatch($userId, $input);
+            if(!$status) { http_response_code(400);}
         }
         break;
       default:
@@ -86,7 +89,8 @@ if(is_numeric($userId)) {
     }
     break;
   default:
-    echo "Default method detected";
+    $status = false;
+    http_response_code(400);
     break;
   }
   // $allMatches = Match::GetAllMatches($userId);

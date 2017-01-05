@@ -147,29 +147,61 @@ class Match {
       $myDeck = array_key_exists('myDeck', $input) ? $input['myDeck'] : null;
       $theirDeck = array_key_exists('theirDeck', $input) ? $input['theirDeck'] : null;
 
-      $newMatch = Match::CreateMatch($matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck);
+      // I'm just going to copy/paste the db insert statements here from the create match/game functions so i can use
+      // one big ass transaction
 
-      $gameOne = null;
-      $gameTwo = null;
-      $gameThree = null;
+      try {
+        $db = new DB();
+        $conn = $db->GetConnection();
+        $conn->beginTransaction();
 
-      if(array_key_exists('game', $input[0])) {
-        $gameOne = Game::ParseGame($matchId, $userId, $input[0]);
-      }
+        // First try and make the match
+        $stmt = $conn->prepare("INSERT INTO matches(matchId, userId, eventName, datetime, rel, format, myDeck, theirDeck) VALUES(:matchId, :userId, :eventName, :datetime, :rel, :format, :myDeck, :theirDeck)");
+        $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
+        $stmt->bindValue(":userId", $userId, PDO::PARAM_STR);
+        $stmt->bindValue(":eventName", $eventName, PDO::PARAM_STR);
+        $stmt->bindValue(":datetime", $datetime, PDO::PARAM_INT);
+        $stmt->bindValue(":rel", $rel, PDO::PARAM_STR);
+        $stmt->bindValue(":format", $format, PDO::PARAM_STR);
+        $stmt->bindValue(":myDeck", $myDeck, PDO::PARAM_STR);
+        $stmt->bindValue(":theirDeck", $myDeck, PDO::PARAM_STR);
+        $stmt->execute();
 
-      if(array_key_exists('game', $input[1])) {
-        $gameTwo = Game::ParseGame($matchId, $userId, $input[1]);
-      }
+        // Then loop thru and do the games
+        for ($i=0;$i<3;$i++) {
+          if(array_key_exists($i, $input) && array_key_exists('game', $input[$i])) {
+            $game = $input[$i]['game'];
+            $start = array_key_exists('start', $input) ? $input['start'] : null;
+            $result = array_key_exists('start', $input) ? $input['start'] : null;
+            $myHand = array_key_exists('myHand', $input) ? $input['myHand'] : null;
+            $theirHand = array_key_exists('theirHand', $input) ? $input['theirHand'] : null;
+            $notes = array_key_exists('notes', $input) ? $input['notes'] : null;
+            try {
+              $stmt = $conn->prepare("INSERT INTO game(matchId, game, start, result, myHand, theirHand, notes) VALUES(:matchId, :game, :start, :result, :myHand, :theirHand, :notes)");
+              $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
+              $stmt->bindValue(":game", $game, PDO::PARAM_INT);
+              $stmt->bindValue(":start", $start, PDO::PARAM_INT);
+              $stmt->bindValue(":result", $result, PDO::PARAM_INT);
+              $stmt->bindValue(":myHand", $myHand, PDO::PARAM_INT);
+              $stmt->bindValue(":theirHand", $theirHand, PDO::PARAM_INT);
+              $stmt->bindValue(":notes", $notes, PDO::PARAM_STR);
+              $stmt->execute();
+            }catch(Exception $ex) {
+              return False;
+            }
+          } else {
+            return False;
+          }
+        }
 
-      if(array_key_exists(2, $input)) {
-        $gameThree = Game::ParseGame($matchId, $userId, $input[2]);
-      }
+        // If all that works out, commit and return that we did it
+        $conn->commit();
 
-      if(is_numeric($newMatch) && is_numeric($gameOne) && is_numeric($gameTwo)) {
-        return True;
-      }else {
+      }catch( Exception $ex ){
         return False;
       }
+
+      return True;
     }else {
       // If we don't have a match id I think wejust bail.
       return False;
