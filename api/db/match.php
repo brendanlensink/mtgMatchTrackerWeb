@@ -156,16 +156,10 @@ class Match {
         $conn->beginTransaction();
 
         // First try and make the match
-        $stmt = $conn->prepare("INSERT INTO matches(matchId, userId, eventName, datetime, rel, format, myDeck, theirDeck) VALUES(:matchId, :userId, :eventName, :datetime, :rel, :format, :myDeck, :theirDeck)");
-        $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
-        $stmt->bindValue(":userId", $userId, PDO::PARAM_STR);
-        $stmt->bindValue(":eventName", $eventName, PDO::PARAM_STR);
-        $stmt->bindValue(":datetime", $datetime, PDO::PARAM_INT);
-        $stmt->bindValue(":rel", $rel, PDO::PARAM_STR);
-        $stmt->bindValue(":format", $format, PDO::PARAM_STR);
-        $stmt->bindValue(":myDeck", $myDeck, PDO::PARAM_STR);
-        $stmt->bindValue(":theirDeck", $myDeck, PDO::PARAM_STR);
-        $stmt->execute();
+        $msg = Match::CreateMatchWithDB(
+            $conn, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck);
+
+        if(!is_numeric($msg)) { return $msg;}
 
         // Then loop thru and do the games
         for ($i=0;$i<3;$i++) {
@@ -177,45 +171,35 @@ class Match {
             $theirHand = array_key_exists('theirHand', $input) ? $input['theirHand'] : null;
             $notes = array_key_exists('notes', $input) ? $input['notes'] : null;
             try {
-              $stmt = $conn->prepare("INSERT INTO game(matchId, game, start, result, myHand, theirHand, notes) VALUES(:matchId, :game, :start, :result, :myHand, :theirHand, :notes)");
-              $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
-              $stmt->bindValue(":game", $game, PDO::PARAM_INT);
-              $stmt->bindValue(":start", $start, PDO::PARAM_INT);
-              $stmt->bindValue(":result", $result, PDO::PARAM_INT);
-              $stmt->bindValue(":myHand", $myHand, PDO::PARAM_INT);
-              $stmt->bindValue(":theirHand", $theirHand, PDO::PARAM_INT);
-              $stmt->bindValue(":notes", $notes, PDO::PARAM_STR);
-              $stmt->execute();
+              $msg = Game::CreateGameWithDB($conn, $matchId, $game, $start, $result, $myHand, $theirHand, $notes);
+              if(!is_numeric($msg)) { return $msg;}
             }catch(Exception $ex) {
-              return False;
+              return $msg;
             }
           } else {
-            return False;
+            if($i!=2) {
+              return "No game number supplied for a game";
+            }
           }
         }
 
         // If all that works out, commit and return that we did it
         $conn->commit();
-
       }catch( Exception $ex ){
-        return False;
+        return $ex;
       }
 
-      return True;
+      return $msg;
     }else {
       // If we don't have a match id I think wejust bail.
-      return False;
+      return "No MatchID supplied";
     }
   }
 
-  public static function CreateMatch(
-      $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck) {
+  public static function CreateMatchWithDB($conn, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck) {
     $msg = "";
 
     try {
-      $db = new DB();
-      $conn = $db->GetConnection();
-
       $stmt = $conn->prepare("INSERT INTO matches(matchId, userId, eventName, datetime, rel, format, myDeck, theirDeck) VALUES(:matchId, :userId, :eventName, :datetime, :rel, :format, :myDeck, :theirDeck)");
       $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
       $stmt->bindValue(":userId", $userId, PDO::PARAM_STR);
@@ -230,6 +214,19 @@ class Match {
       $msg = $conn->lastInsertID();
       return $msg;
     } catch(Exception $ex) {
+      return "Unable to create match: ".$ex;
+    }
+  }
+
+  public static function CreateMatch($matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck) {
+    $msg = "";
+
+    try {
+      $db = new DB();
+      $conn = $db->GetConnection();
+      return Match::CreateMatchWithDB(
+          $conn, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck);
+    }catch(Exception $ex) {
       return "Unable to create match: ".$ex;
     }
   }

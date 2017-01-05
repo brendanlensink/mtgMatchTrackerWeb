@@ -102,13 +102,10 @@ class Game {
     return "Game not supplied";
   }
 
-  public static function CreateGame($matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
+  public static function CreateGameWithDB($conn, $matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
     $msg = "";
 
     try {
-      $db = new DB();
-      $conn = $db->GetConnection();
-
       $stmt = $conn->prepare("INSERT INTO game(matchId, game, start, result, myHand, theirHand, notes) VALUES(:matchId, :game, :start, :result, :myHand, :theirHand, :notes)");
       $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
       $stmt->bindValue(":game", $game, PDO::PARAM_INT);
@@ -121,6 +118,18 @@ class Game {
 
       $msg = $conn->lastInsertID();
       return $msg;
+    } catch(Exception $ex) {
+      return "Unable to create game: ".$ex;
+    }
+  }
+
+  public static function CreateGame($matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
+    $msg = "";
+
+    try {
+      $db = new DB();
+      $conn = $db->GetConnection();
+      return Game::CreateGameWithDB($conn, $matchId, $game, $start, $result, $myHand, $theirHand, $notes);
     } catch(Exception $ex) {
       return "Unable to create game: ".$ex;
     }

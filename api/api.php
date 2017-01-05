@@ -76,8 +76,15 @@ if(is_numeric($userId)) {
           // TODO: Update an existing match
         }else {
         // If there was no matchId supplied, we're adding a new match record
-            $status = Match::ParseMatch($userId, $input);
-            if(!$status) { http_response_code(400);}
+            $result = Match::ParseMatch($userId, $input);
+
+            if(is_numeric($result)) {
+              $status = true;
+            }else {
+              http_response_code(400);
+              $status = false;
+              $message = $result;
+            }
         }
         break;
       default:
@@ -93,10 +100,6 @@ if(is_numeric($userId)) {
     http_response_code(400);
     break;
   }
-  // $allMatches = Match::GetAllMatches($userId);
-  // foreach($allMatches as $match) {
-  //   print(json_encode($match->MakeArray()));
-  // }
 
   $returnArray = array(
     "status" => $status,
