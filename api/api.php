@@ -22,11 +22,10 @@ $request = explode('/', trim($_SERVER['PATH_INFO'], '/'));
 $input = json_decode(file_get_contents('php://input'), true);
 
 // Check if we're authenticated
-$username = $_SERVER['HTTP_USERNAME'];
-$password = $_SERVER['HTTP_PASSWORD'];
-$userId = Auth::Login($username, $password);
+$authkey = array_key_exists("HTTP_AUTHKEY", $_SERVER) ? $_SERVER['HTTP_AUTHKEY'] : null;
+$userId = array_key_exists("HTTP_ID", $_SERVER) ? $_SERVER['HTTP_ID'] : null;
 
-if(is_numeric($userId)) {
+if($authkey == $CONFIG["auth"] && is_numeric($userId)) {
 
   // Decide if we're GETting or POSTing
   switch ($method) {
@@ -65,7 +64,7 @@ if(is_numeric($userId)) {
     } else {
       http_response_code(400);
       $status = False;
-      $message = "No endpoint supplied"
+      $message = "No endpoint supplied";
     }
     break;
   case 'POST':
@@ -102,14 +101,18 @@ if(is_numeric($userId)) {
     http_response_code(400);
     break;
   }
-
-  // Finally packaage up the return array and the send it back
-  $returnArray = array(
-    "status" => $status,
-    "message" => $message,
-    "data" => $data
-  );
-
-  echo json_encode($returnArray);
+} else {
+  http_response_code(400);
+  $status = false;
+  $message = "Id was null or no api key supplied";
 }
+
+// Finally packaage up the return array and the send it back
+$returnArray = array(
+  "status" => $status,
+  "message" => $message,
+  "data" => $data
+);
+
+echo json_encode($returnArray);
 ?>
