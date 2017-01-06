@@ -7,13 +7,17 @@
 require_once $CONFIG['root'].'\db\db.php';
 require_once $CONFIG['root'].'\db\game.php';
 
+/**
+ * Class to handle match objects
+ */
 class Match {
 
-  /**
-  * Instance Data
-  */
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //                                                                                                                  //
+	// Instance Data                                                                                                    //
+	//                                                                                                                  //
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  private $id;
   private $matchId;
   private $userId;
   private $eventName;
@@ -24,39 +28,27 @@ class Match {
   private $theirDeck;
   private $games;
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//                                                                                                                  //
+	// Getters and Setters                                                                                              //
+	//                                                                                                                  //
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   /**
-  * Getters and Setters
-  */
-
-  public function GetMatchId() {
-    return $this->matchId;
-  }
-
-  public function AddGames($gameArray) {
-    $this->games = $gameArray;
-  }
-
-  public function MakeArray() {
-    $returnArray = array(
-      "matchId" => $this->matchId,
-      "userId" => $this->userId,
-      "eventName" => $this->eventName,
-      "datetime" => $this->datetime,
-      "rel" => $this->rel,
-      "format" => $this->format,
-      "myDeck" => $this->myDeck,
-      "theirDeck" => $this->theirDeck
-    );
-
-    foreach ($this->games as $game) {
-      array_push($returnArray, $game->MakeArray());
-    }
-
-    return $returnArray;
-  }
-
+   * Default match constructor
+   *
+   * @param int $matchId The match id
+   * @param int $userId The id of the user the match belongs to
+   * @param string $eventName The name of the match event
+   * @param int $datetime The time of the match
+   * @param string $rel The REL of the match
+   * @param string $format The format the match was played in
+   * @param string $myDeck The user's deck played
+   * @param string $theirDeck The opp's deck played
+   * @param array $games An array of the game objects played
+   */
   public function __construct(
-      $id, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck, $games) {
+      $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck, $games) {
     $this->id = $id;
     $this->matchId = $matchId;
     $this->userId = $userId;
@@ -70,9 +62,61 @@ class Match {
   }
 
   /**
-  * Static Methods
-  */
+   * Get the match id
+   *
+   * @return The match id
+   */
+  public function GetMatchId() {
+    return $this->matchId;
+  }
 
+  /**
+   * Add a set of games to the match object
+   *
+   * @param array $gameArray The games to add
+   */
+  public function AddGames($gameArray) {
+    $this->games = $gameArray;
+  }
+
+  /**
+   *  Turn the match object into an array so we can json_encode it
+   *
+   *  @return The game object as an array
+   */
+  public function MakeArray() {
+    $returnArray = array(
+      "matchId" => $this->matchId,
+      "userId" => $this->userId,
+      "eventName" => $this->eventName,
+      "datetime" => $this->datetime,
+      "rel" => $this->rel,
+      "format" => $this->format,
+      "myDeck" => $this->myDeck,
+      "theirDeck" => $this->theirDeck
+    );
+
+    // We also need to encode and tack on the game objects
+    foreach ($this->games as $game) {
+      array_push($returnArray, $game->MakeArray());
+    }
+
+    return $returnArray;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//                                                                                                                  //
+	// Static Methods                                                                                                   //
+	//                                                                                                                  //
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  /**
+  * Populates a match object with a database row
+  *
+  * @param array $row The database row's contents
+  *
+  * @return An match object
+  */
   private static function PopulateMatch($row) {
     $id = $row['id'];
     $matchId = $row['matchId'];
@@ -88,6 +132,13 @@ class Match {
     return $newMatch;
   }
 
+  /**
+  * Attempts to retrieve a match from the database by its id
+  *
+  * @param int $id The id to look for
+  *
+  * @return The match if we found one or null if we didn't
+  */
   public static function GetMatchById($matchId) {
     try {
       $db = new DB();
@@ -112,6 +163,13 @@ class Match {
     }
   }
 
+  /**
+   * Get all the matches for a given user
+   *
+   * @param int $userId The id of the user
+   *
+   * @return An array of the games or an error message
+   */
   public static function GetAllMatches($userId) {
     $matches = array();
 
@@ -135,10 +193,18 @@ class Match {
     }
   }
 
+  /**
+   * Parse the input from a post request and save the match object provided to the database
+   *
+   * @param int $userId The userId for the games
+   * @param array $input The rest of the game objects
+   *
+   * @return The match object if successful
+   */
   public static function ParseMatch($userId, $input) {
     // The only pieces we need to actually submit a match are a matchId, a userId and some games?
     if(array_key_exists('matchId', $input) && array_key_exists(0, $input) && array_key_exists(1, $input) ) {
-      // There's got to be a better way to do this, but start collecting all the match info from the json
+      // We need to check what other match data we were provided and sub any missing pieces out with null
       $matchId = $input['matchId'];
       $eventName = array_key_exists('eventName', $input) ? $input['eventName'] : null;
       $datetime = array_key_exists('datetime', $input) ? $input['datetime'] : null;
@@ -147,9 +213,7 @@ class Match {
       $myDeck = array_key_exists('myDeck', $input) ? $input['myDeck'] : null;
       $theirDeck = array_key_exists('theirDeck', $input) ? $input['theirDeck'] : null;
 
-      // I'm just going to copy/paste the db insert statements here from the create match/game functions so i can use
-      // one big ass transaction
-
+      // Now we're going to save the match and all of its games in one big old transaction
       try {
         $db = new DB();
         $conn = $db->GetConnection();
@@ -159,6 +223,7 @@ class Match {
         $msg = Match::CreateMatchWithDB(
             $conn, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck);
 
+        // If the match was created successfully, $msg will be its id and we can move on, if not return the error
         if(!is_numeric($msg)) { return $msg;}
 
         // Then loop thru and do the games
@@ -196,11 +261,29 @@ class Match {
     }
   }
 
-  public static function CreateMatchWithDB($conn, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck) {
+  /**
+  * Save a match object to the database with a given database connection
+  *
+  * @param object $conn The connection to the database
+  * @param int $matchId The match id
+  * @param int $userId The id of the user the match belongs to
+  * @param string $eventName The name of the match event
+  * @param int $datetime The time of the match
+  * @param string $rel The REL of the match
+  * @param string $format The format the match was played in
+  * @param string $myDeck The user's deck played
+  * @param string $theirDeck The opp's deck played
+  * @param array $games An array of the game objects played
+  *
+  * @return The match id if successful or an error message
+  */
+  public static function CreateMatchWithDB(
+      $conn, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck) {
     $msg = "";
 
     try {
-      $stmt = $conn->prepare("INSERT INTO matches(matchId, userId, eventName, datetime, rel, format, myDeck, theirDeck) VALUES(:matchId, :userId, :eventName, :datetime, :rel, :format, :myDeck, :theirDeck)");
+      $stmt = $conn->prepare("INSERT INTO matches(matchId,userId,eventName,datetime,rel,format,myDeck,theirDeck)".
+        " VALUES(:matchId, :userId, :eventName, :datetime, :rel, :format, :myDeck, :theirDeck)");
       $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
       $stmt->bindValue(":userId", $userId, PDO::PARAM_STR);
       $stmt->bindValue(":eventName", $eventName, PDO::PARAM_STR);
@@ -218,6 +301,21 @@ class Match {
     }
   }
 
+  /**
+  * Save a match object to the database
+  *
+  * @param int $matchId The match id
+  * @param int $userId The id of the user the match belongs to
+  * @param string $eventName The name of the match event
+  * @param int $datetime The time of the match
+  * @param string $rel The REL of the match
+  * @param string $format The format the match was played in
+  * @param string $myDeck The user's deck played
+  * @param string $theirDeck The opp's deck played
+  * @param array $games An array of the game objects played
+  *
+  * @return The match id if successful or an error message
+  */
   public static function CreateMatch($matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck) {
     $msg = "";
 

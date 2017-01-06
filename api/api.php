@@ -2,37 +2,36 @@
 /**
  *  Simple REST API for MTGMatchTracker
  *
- *  Created by Brendan Lensink, 2016
+ *  @author Brendan Lensink
+ *  @version 1.0
  */
 
 require_once 'config_local.php';
 require_once 'logic/auth.php';
 require_once 'db/match.php';
 
+// Set the defaults for our response
+
 $status = False;
 $message = "";
 $data = array();
 
-// Step 1: Get the HTPP method, path and body of the request
-
+// Get the HTPP method, path and body of the request
 $method = $_SERVER['REQUEST_METHOD'];
 $request = explode('/', trim($_SERVER['PATH_INFO'], '/'));
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Step 2: Check if we're authenticated
-
+// Check if we're authenticated
 $username = $_SERVER['HTTP_USERNAME'];
 $password = $_SERVER['HTTP_PASSWORD'];
 $userId = Auth::Login($username, $password);
 
 if(is_numeric($userId)) {
 
-  // Step 3: Decide if we're GETting or POSTing
-
+  // Decide if we're GETting or POSTing
   switch ($method) {
   case 'GET':
-
-    // Step 4a: If it's a get request, figure out what we're looking format
+    // If it's a get request, figure out what we're looking for
     if(array_key_exists(0, $request)) {
       switch($request[0]) {
       case 'matches':
@@ -47,7 +46,6 @@ if(is_numeric($userId)) {
             }
           } else {
             $match = Match::GetMatchById($request[1]);
-
             if(is_object($match)) {
               // Update the status and data return fields if we've succeeded
               $status = True;
@@ -61,9 +59,13 @@ if(is_numeric($userId)) {
       default:
         http_response_code(400);
         $status = False;
-        $message = "No request supplied";
+        $message = "Incorrect endpoint supplied";
         break;
       }
+    } else {
+      http_response_code(400);
+      $status = False;
+      $message = "No endpoint supplied"
     }
     break;
   case 'POST':
@@ -101,6 +103,7 @@ if(is_numeric($userId)) {
     break;
   }
 
+  // Finally packaage up the return array and the send it back
   $returnArray = array(
     "status" => $status,
     "message" => $message,
@@ -109,6 +112,4 @@ if(is_numeric($userId)) {
 
   echo json_encode($returnArray);
 }
-
-
- ?>
+?>

@@ -6,11 +6,16 @@
 
 require_once $CONFIG['root'].'\db\db.php';
 
+/**
+ * Class to manage game objects
+ */
 class Game {
 
-  /**
-  * Instance Data
-  */
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//                                                                                                                  //
+	// Instance Data                                                                                                    //
+	//                                                                                                                  //
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   private $matchId;
   private $game;
@@ -20,10 +25,38 @@ class Game {
   private $theirHand;
   private $notes;
 
-  /**
-  * Getters and Setters
-  */
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//                                                                                                                  //
+	// Getters and Setters                                                                                              //
+	//                                                                                                                  //
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * Default game object constructor
+   *
+   * @param int $matchId The match id
+   * @param int $game The game number
+   * @param bool $start The game start
+   * @param bool $result The game result
+   * @param int $myHand User's starting hand value
+   * @param int $theirHand Opp's starting hand value
+   * @param string $notes Notes taken for the game
+   */
+  public function __construct($matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
+    $this->matchId = $matchId;
+    $this->game = $game;
+    $this->start = $start;
+    $this->result = $result;
+    $this->myHand = $myHand;
+    $this->theirHand = $theirHand;
+    $this->notes = $notes;
+  }
+
+  /**
+   *  Turn the game object into an array so we can json_encode it
+   *
+   *  @return The game object as an array
+   */
   public function MakeArray() {
     return array(
       "matchId" => $this->matchId,
@@ -36,20 +69,19 @@ class Game {
     );
   }
 
-  public function __construct($matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
-    $this->matchId = $matchId;
-    $this->game = $game;
-    $this->start = $start;
-    $this->result = $result;
-    $this->myHand = $myHand;
-    $this->theirHand = $theirHand;
-    $this->notes = $notes;
-  }
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//                                                                                                                  //
+	// Static Methods                                                                                                   //
+	//                                                                                                                  //
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-  * Static Methods
+  * Populates a game object with a database row
+  *
+  * @param array $row The database row's contents
+  *
+  * @return A game object
   */
-
   private static function PopulateGame($row) {
     $matchId = $row['matchId'];
     $game = $row['game'];
@@ -63,6 +95,13 @@ class Game {
     return $newGame;
   }
 
+  /**
+   * Get all of the games for a given match id
+   *
+   * @param int $matchId The match id of the games we're looking for
+   *
+   * @return An array of the game objects or an error message
+   */
   public static function GetGamesForMatch($matchId) {
     $games = array();
 
@@ -84,9 +123,19 @@ class Game {
     }
   }
 
+  /**
+   * Parse the input from a post request and save the game objects provided to the database
+   *
+   * @param int $matchId The matchId for the games
+   * @param int $userId The userId for the games
+   * @param array $input The rest of the game objects
+   *
+   * @return The game object if successful
+   */
   public static function ParseGame($matchId, $userId, $input) {
     // If we don't have a matchId and a game then we're SOL
     if(array_key_exists('game', $input)) {
+      // We need to check what other game data we were provided and sub any missing pieces out with null
       $game = $input['game'];
       $start = array_key_exists('start', $input) ? $input['start'] : null;
       $result = array_key_exists('start', $input) ? $input['start'] : null;
@@ -102,11 +151,26 @@ class Game {
     return "Game not supplied";
   }
 
+  /**
+  * Save a game object to the database with a given database connection
+  *
+  * @param object $conn The connection to the database
+  * @param int $matchId The match id
+  * @param int $game The game number
+  * @param bool $start The game start
+  * @param bool $result The game result
+  * @param int $myHand User's starting hand value
+  * @param int $theirHand Opp's starting hand value
+  * @param string $notes Notes taken for the game
+  *
+  * @return The game id if successful or an error message
+  */
   public static function CreateGameWithDB($conn, $matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
     $msg = "";
 
     try {
-      $stmt = $conn->prepare("INSERT INTO game(matchId, game, start, result, myHand, theirHand, notes) VALUES(:matchId, :game, :start, :result, :myHand, :theirHand, :notes)");
+      $stmt = $conn->prepare("INSERT INTO game(matchId, game, start, result, myHand, theirHand, notes) VALUES".
+        "(:matchId, :game, :start, :result, :myHand, :theirHand, :notes)");
       $stmt->bindValue(":matchId", $matchId, PDO::PARAM_STR);
       $stmt->bindValue(":game", $game, PDO::PARAM_INT);
       $stmt->bindValue(":start", $start, PDO::PARAM_INT);
@@ -123,6 +187,19 @@ class Game {
     }
   }
 
+  /**
+  * Save a game object to the database
+  *
+  * @param int $matchId The match id
+  * @param int $game The game number
+  * @param bool $start The game start
+  * @param bool $result The game result
+  * @param int $myHand User's starting hand value
+  * @param int $theirHand Opp's starting hand value
+  * @param string $notes Notes taken for the game
+  *
+  * @return The game id if successful or an error message
+  */
   public static function CreateGame($matchId, $game, $start, $result, $myHand, $theirHand, $notes) {
     $msg = "";
 

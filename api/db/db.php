@@ -4,6 +4,9 @@
 * Manages the connection to the database
 */
 
+/**
+ * Class to handle the database connection
+ */
 class DB {
   private $db = null;
 
@@ -14,7 +17,8 @@ class DB {
     global $CONFIG;
 
     try {
-      $this->db = new PDO("mysql:host=".$CONFIG["db"]["host"].";dbname=".$CONFIG["db"]["name"],$CONFIG["db"]["user"],$CONFIG["db"]["pass"]);
+      $this->db = new PDO("mysql:host=".$CONFIG["db"]["host"].";dbname=".$CONFIG["db"]["name"],$CONFIG["db"]["user"],
+        $CONFIG["db"]["pass"]);
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
     catch(Exception $ex) {
@@ -22,7 +26,11 @@ class DB {
     }
   }
 
-  //Returns the current database connection isntance.
+  /**
+  * Returns the current database connection instance
+  *
+  * @return The connection to the database
+  */
   public function GetConnection() {
     return $this->db;
   }
