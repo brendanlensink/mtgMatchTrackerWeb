@@ -4,8 +4,8 @@
 * Class to manage match objects on the server.
 */
 
-require_once $CONFIG['root'].'\db\db.php';
-require_once $CONFIG['root'].'\db\game.php';
+require_once $CONFIG['root'].'db/db.php';
+require_once $CONFIG['root'].'db/game.php';
 
 /**
  * Class to handle match objects
@@ -230,11 +230,11 @@ class Match {
         for ($i=0;$i<3;$i++) {
           if(array_key_exists($i, $input) && array_key_exists('game', $input[$i])) {
             $game = $input[$i]['game'];
-            $start = array_key_exists('start', $input) ? $input['start'] : null;
-            $result = array_key_exists('start', $input) ? $input['start'] : null;
-            $myHand = array_key_exists('myHand', $input) ? $input['myHand'] : null;
-            $theirHand = array_key_exists('theirHand', $input) ? $input['theirHand'] : null;
-            $notes = array_key_exists('notes', $input) ? $input['notes'] : null;
+            $start = array_key_exists('start', $input[$i]) ? $input[$i]['start'] : null;
+            $result = array_key_exists('start', $input[$i]) ? $input[$i]['result'] : null;
+            $myHand = array_key_exists('myHand', $input[$i]) ? $input[$i]['myHand'] : null;
+            $theirHand = array_key_exists('theirHand', $input[$i]) ? $input[$i]['theirHand'] : null;
+            $notes = array_key_exists('notes', $input[$i]) ? $input[$i]['notes'] : null;
             try {
               $msg = Game::CreateGameWithDB($conn, $matchId, $game, $start, $result, $myHand, $theirHand, $notes);
               if(!is_numeric($msg)) { return $msg;}

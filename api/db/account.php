@@ -7,7 +7,7 @@
  *  @version 1.0
  */
 
-require_once $CONFIG['root'].'\db\db.php';
+require_once $CONFIG['root'].'db/db.php';
 
 /**
  *  Class in charge of handling user account objects

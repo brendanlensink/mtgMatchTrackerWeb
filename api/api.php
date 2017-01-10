@@ -7,7 +7,6 @@
  */
 
 require_once 'config_local.php';
-require_once 'logic/auth.php';
 require_once 'db/match.php';
 
 // Set the defaults for our response
@@ -25,7 +24,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $authkey = array_key_exists("HTTP_AUTHKEY", $_SERVER) ? $_SERVER['HTTP_AUTHKEY'] : null;
 $userId = array_key_exists("HTTP_ID", $_SERVER) ? $_SERVER['HTTP_ID'] : null;
 
-if($authkey == $CONFIG["auth"] && is_numeric($userId)) {
+if($authkey == $CONFIG["auth"] && $userId != null) {
 
   // Decide if we're GETting or POSTing
   switch ($method) {
@@ -107,7 +106,7 @@ if($authkey == $CONFIG["auth"] && is_numeric($userId)) {
   $message = "Id was null or no api key supplied";
 }
 
-// Finally packaage up the return array and the send it back
+// Finally package up the return array and the send it back
 $returnArray = array(
   "status" => $status,
   "message" => $message,

@@ -4,7 +4,7 @@
 * Class to manage game objects on the server.
 */
 
-require_once $CONFIG['root'].'\db\db.php';
+require_once $CONFIG['root'].'db/db.php';
 
 /**
  * Class to manage game objects
@@ -138,7 +138,7 @@ class Game {
       // We need to check what other game data we were provided and sub any missing pieces out with null
       $game = $input['game'];
       $start = array_key_exists('start', $input) ? $input['start'] : null;
-      $result = array_key_exists('start', $input) ? $input['start'] : null;
+      $result = array_key_exists('result', $input) ? $input['result'] : null;
       $myHand = array_key_exists('myHand', $input) ? $input['myHand'] : null;
       $theirHand = array_key_exists('theirHand', $input) ? $input['theirHand'] : null;
       $notes = array_key_exists('notes', $input) ? $input['notes'] : null;
