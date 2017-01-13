@@ -8,6 +8,7 @@
 
 require_once 'config_local.php';
 require_once 'db/match.php';
+require_once 'db/identifier.php';
 
 // Set the defaults for our response
 
@@ -53,6 +54,57 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
               array_push($data, $match);
             }
           }
+        break;
+      case 'user':
+        // If nothing else has been supplied lets look in the header for a code and device id and check it
+        if(!array_key_exists(1, $request)) {
+          http_response_code(400);
+          $status = False;
+          $message = "No command specified";
+        } else {
+          $param = $request[1];
+          $deviceID = array_key_exists("HTTP_DEVICEID", $_SERVER) ? $_SERVER['HTTP_DEVICEID'] : null;
+          $firstWord = array_key_exists('HTTP_FIRST', $_SERVER) ? $_SERVER['HTTP_FIRST']: null;
+          $secondWord = array_key_exists('HTTP_SECOND', $_SERVER) ? $_SERVER['HTTP_SECOND']: null;
+
+          if($deviceID != null) {
+            switch($param) {
+            case 'code':
+              $code = Identifier::CreateIdentifier($deviceID);
+
+              $status = is_numeric($code);
+              $message = $code;
+              break;
+            case 'checkCode':
+              if($firstWord != null && $secondWord != null) {
+                $code = Identifier::GetIdenfifierByDeviceID($deviceID);
+
+                if($code != null) {
+                  $code = $code->GetCode();
+                  $status =  $code == $firstWord." ".$secondWord;
+                }else {
+                  http_response_code(400);
+                  $status = False;
+                  $message = "No code for the given device ID";
+                }
+              }else {
+                http_response_code(400);
+                $status = False;
+                $message = "First word or second word was null ".$firstWord.",".$secondWord;
+              }
+              break;
+            default:
+              http_response_code(400);
+              $status = false;
+              $message = "No action specified for the given endpoint";
+              break;
+            }
+          } else {
+            http_response_code(400);
+            $status = false;
+            $message = "No device ID specified";
+          }
+        }
         break;
       default:
         http_response_code(400);
