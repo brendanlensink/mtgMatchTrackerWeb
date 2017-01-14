@@ -30,33 +30,23 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
   // Decide if we're GETting or POSTing
   switch ($method) {
   case 'GET':
-    // If it's a get request, figure out what we're looking for
     if(array_key_exists(0, $request)) {
       switch($request[0]) {
       case 'matches':
-          // If there was nothing else provided, get all the matches for a user
           if(!array_key_exists(1, $request)) {
-            $allMatches = Match::GetAllMatches($userId);
-            $matchArray = array();
-            foreach($allMatches as $match) {
-              // Update the status and data return fields
-              $status = True;
-              array_push($data, $match->MakeArray());
-            }
+            $status = True;
+            $data = Match::GetAllMatches($userID);
           } else {
             $match = Match::GetMatchById($request[1]);
+            $status = True;
             if(is_object($match)) {
-              // Update the status and data return fields if we've succeeded
-              $status = True;
-              array_push($data, $match->MakeArray());
-            }else {
+              $match = $match->MakeArray();
+            } else {
               $message = "No match with id: ".$request[1]." found";
-              array_push($data, $match);
             }
           }
         break;
       case 'user':
-        // If nothing else has been supplied lets look in the header for a code and device id and check it
         if(!array_key_exists(1, $request)) {
           http_response_code(400);
           $status = False;
@@ -71,7 +61,6 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
             switch($param) {
             case 'code':
               $code = Identifier::CreateIdentifier($deviceID);
-
               $status = is_numeric($code);
               $message = $code;
               break;
@@ -80,8 +69,7 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
                 $code = Identifier::GetIdenfifierByDeviceID($deviceID);
 
                 if($code != null) {
-                  $code = $code->GetCode();
-                  $status =  $code == $firstWord." ".$secondWord;
+                  $status = $code->GetCode() == $firstWord." ".$secondWord;
                 }else {
                   http_response_code(400);
                   $status = False;
@@ -119,24 +107,19 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
     }
     break;
   case 'POST':
-    // Make sure we've got the right endpoint
     if(array_key_exists(0, $request)) {
       switch($request[0]) {
       case 'matches':
-        // If there's a match id supplied, we're updating an existing record
         if(array_key_exists(1, $request)) {
-          // TODO: Update an existing match
         }else {
-        // If there was no matchId supplied, we're adding a new match record
-            $result = Match::ParseMatch($userId, $input);
-
-            if(is_numeric($result)) {
-              $status = true;
-            }else {
-              http_response_code(400);
-              $status = false;
-              $message = $result;
-            }
+          $result = Match::ParseMatch($userId, $input);
+          if(is_numeric($result)) {
+            $status = true;
+          }else {
+            http_response_code(400);
+            $status = false;
+            $message = $result;
+          }
         }
         break;
       default:

@@ -133,6 +133,24 @@ class Match {
   }
 
   /**
+   * Get all the matches for a given user
+   *
+   * @param int $userId The id of the user
+   *
+   * @return An array of the games as array_diff_uassoc or an error message
+   */
+  public static function GetAllMatches($userID) {
+    $matchesFromDB = Match::GetAllMatchesByUserID($userID);
+    $matchArray = array();
+
+    foreach($matchesFromDB as $match) {
+      array_push($matchArray, $match->MakeArray());
+    }
+
+    return $matchArray;
+  }
+
+  /**
   * Attempts to retrieve a match from the database by its id
   *
   * @param int $id The id to look for
@@ -168,9 +186,9 @@ class Match {
    *
    * @param int $userId The id of the user
    *
-   * @return An array of the games or an error message
+   * @return An array of the games as game objects or an error message
    */
-  public static function GetAllMatches($userId) {
+  public static function GetAllMatchesByUserID($userId) {
     $matches = array();
 
     try {
