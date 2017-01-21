@@ -159,7 +159,7 @@ class Identifier {
       $result = $stmt->fetch();
 
       if($result) {
-        return true;
+        return Identifier::PopulateIdentifier($result);
       }
       return false;
     } catch(Exception $ex) {

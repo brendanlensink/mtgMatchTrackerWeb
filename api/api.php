@@ -35,7 +35,7 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
       case 'matches':
           if(!array_key_exists(1, $request)) {
             $status = True;
-            $data = Match::GetAllMatches($userID);
+            $data = Match::GetAllMatches($userId);
           } else {
             $match = Match::GetMatchById($request[1]);
             $status = True;
@@ -53,44 +53,45 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
           $message = "No command specified";
         } else {
           $param = $request[1];
-          $deviceID = array_key_exists("HTTP_DEVICEID", $_SERVER) ? $_SERVER['HTTP_DEVICEID'] : null;
           $firstWord = array_key_exists('HTTP_FIRST', $_SERVER) ? $_SERVER['HTTP_FIRST']: null;
           $secondWord = array_key_exists('HTTP_SECOND', $_SERVER) ? $_SERVER['HTTP_SECOND']: null;
 
-          if($deviceID != null) {
-            switch($param) {
-            case 'code':
+          switch($param) {
+          case 'code':
+            $deviceID = array_key_exists("HTTP_DEVICEID", $_SERVER) ? $_SERVER['HTTP_DEVICEID'] : null;
+            if($deviceID != null) {
               $code = Identifier::CreateIdentifier($deviceID);
               $status = is_numeric($code);
               $message = $code;
-              break;
-            case 'checkCode':
-              if($firstWord != null && $secondWord != null) {
-                $code = Identifier::GetIdenfifierByDeviceID($deviceID);
+            }else {
+              http_response_code(400);
+              $status = false;
+              $message = "No device ID specified";
+            }
+            break;
+          case 'checkCode':
+            if($firstWord != null && $secondWord != null) {
+              $identifier = Identifier::GetDeviceIDByIdentifier($firstWord, $secondWord);
 
-                if($code != null) {
-                  $status = $code->GetCode() == $firstWord." ".$secondWord;
-                }else {
-                  http_response_code(400);
-                  $status = False;
-                  $message = "No code for the given device ID";
-                }
+              if($identifier != null) {
+                $status = True;
+                $message = $identifier->GetDeviceID();
               }else {
                 http_response_code(400);
                 $status = False;
-                $message = "First word or second word was null ".$firstWord.",".$secondWord;
+                $message = "No match for the given secret code";
               }
-              break;
-            default:
+            }else {
               http_response_code(400);
-              $status = false;
-              $message = "No action specified for the given endpoint";
-              break;
+              $status = False;
+              $message = "First word or second word was null ".$firstWord.",".$secondWord;
             }
-          } else {
+            break;
+          default:
             http_response_code(400);
             $status = false;
-            $message = "No device ID specified";
+            $message = "No action specified for the given endpoint";
+            break;
           }
         }
         break;
