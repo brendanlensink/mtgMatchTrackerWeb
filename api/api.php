@@ -77,12 +77,10 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
                 $status = True;
                 $message = $identifier->GetDeviceID();
               }else {
-                http_response_code(400);
                 $status = False;
                 $message = "No match for the given secret code";
               }
             }else {
-              http_response_code(400);
               $status = False;
               $message = "First word or second word was null ".$firstWord.",".$secondWord;
             }

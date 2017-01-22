@@ -49,7 +49,7 @@ class Identifier {
   *
   * @return The device id
   */
-	public function getDeviceID() {
+	public function GetDeviceID() {
 		return $this->deviceID;
 	}
 
@@ -58,7 +58,7 @@ class Identifier {
   *
   * @return The identifier code
   */
-	public function getCode()	{
+	public function GetCode()	{
 		return $this->firstWord . " " . $this->secondWord;
 	}
 
