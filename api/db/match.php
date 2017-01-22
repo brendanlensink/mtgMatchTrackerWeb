@@ -49,7 +49,6 @@ class Match {
    */
   public function __construct(
       $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck, $games) {
-    $this->id = $id;
     $this->matchId = $matchId;
     $this->userId = $userId;
     $this->eventName = $eventName;
@@ -118,7 +117,6 @@ class Match {
   * @return An match object
   */
   private static function PopulateMatch($row) {
-    $id = $row['id'];
     $matchId = $row['matchId'];
     $userId = $row['userId'];
     $eventName = $row['eventName'];
@@ -128,7 +126,7 @@ class Match {
     $myDeck = $row['myDeck'];
     $theirDeck = $row['theirDeck'];
 
-    $newMatch = new Match($id, $matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck, array());
+    $newMatch = new Match($matchId, $userId, $eventName, $datetime, $rel, $format, $myDeck, $theirDeck, array());
     return $newMatch;
   }
 

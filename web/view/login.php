@@ -37,4 +37,5 @@
     <!-- If there's an error we're going to show it here -->
   </div>
 </div>
+<script src="js/redirect.js" type="text/javascript"></script>
 <script src="js/login.js" type="text/javascript"></script>
