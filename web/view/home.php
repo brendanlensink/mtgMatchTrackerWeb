@@ -15,10 +15,17 @@
   </div>
   <div class="row">
     <div class="col-sm-5">
-      <table class="recent-table">
+      <table class="history table">
         <thead>
+          <tr>
+            <th>Date</th>
+            <th>Event Name</th>
+            <th>Format</th>
+            <th>Decks</th>
+            <th>Result</th>
+          </tr>
         </thead>
-        <tbody class="recent-table-body">
+        <tbody id="recent-table-body">
         </tbody>
       </table>
     </div>

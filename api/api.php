@@ -137,7 +137,7 @@ if($authkey == $CONFIG["auth"] && $userId != null) {
 } else {
   http_response_code(400);
   $status = false;
-  $message = "Id was null or no api key supplied";
+  $message = "Id was null or no api key supplied" +$userId + ","+$authkey;
 }
 
 // Finally package up the return array and the send it back
